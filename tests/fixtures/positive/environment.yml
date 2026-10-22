@@ -1,0 +1,9 @@
+name: fixture-env
+channels:
+  - defaults
+dependencies:
+  - python=3.12
+  - litellm=1.107.0
+  - pip
+  - pip:
+      - requests==2.32.3

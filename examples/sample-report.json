@@ -1,0 +1,331 @@
+{
+  "tool": {
+    "name": "litellm-check",
+    "version": "0.1.0"
+  },
+  "rules_version": "2026.10.22.1",
+  "incident": {
+    "source": "https://docs.litellm.ai/blog/security-incident-oct-21-2026",
+    "source_title": "LiteLLM incident announcement: Oct 21, 2026 LiteLLM release v1.107.0 Compromised",
+    "source_updated": "2026-10-21 20:30 UTC",
+    "affected_package": "litellm",
+    "affected_version": "1.107.0",
+    "pypi_window_utc": "2026-10-21 11:39:51-13:23 UTC",
+    "docker_window_utc": "2026-10-21 11:46:56-14:20 UTC",
+    "ghcr_window_utc": "2026-10-21 11:46:56-13:51 UTC",
+    "compromised_image_digest": "sha256:1bbcb1443bc962e45f5aad53fe3d2c30600e0379715fb6c664cdd3ac126c339e",
+    "summary": "On 2026-10-21, LiteLLM's release pipeline was compromised and v1.107.0 was pushed to PyPI and the container registries with compiled malware that steals credentials and loads remote code. Per the official announcement (https://docs.litellm.ai/blog/security-incident-oct-21-2026, last updated 2026-10-21 20:30 UTC): the PyPI release litellm==1.107.0 was live 2026-10-21 11:39:51-13:23 UTC; the Docker Hub tags v1.107.0, latest, main-latest and main-stable pointed at a compromised image index 2026-10-21 11:46:56-14:20 UTC; the same tags on GHCR were compromised 2026-10-21 11:46:56-13:51 UTC. All previous versions are stated to be safe, the impacted artifacts have been pulled, and enterprise customers on the private enterprise registry were not impacted. Every rule in this tool derives from that announcement; no third-party indicators are used."
+  },
+  "scan": {
+    "target": "/home/hatch/workspace/fast-money/litellm-check/examples/demo-project",
+    "timestamp_utc": "2026-10-22T14:36:35Z",
+    "files_scanned": 15
+  },
+  "summary": {
+    "total_findings": 16,
+    "by_severity": {
+      "critical": 10,
+      "high": 4,
+      "info": 2
+    }
+  },
+  "findings": [
+    {
+      "rule_id": "LL-011",
+      "rule_name": "Compiled implant cache present (__pycache__/cook*.pyc, sitecustomize*.pyc)",
+      "severity": "critical",
+      "component": {
+        "name": "cook.cpython-312.pyc",
+        "type": "installed-environment",
+        "vendor": "LiteLLM (BerriAI)"
+      },
+      "evidence": {
+        "type": "implant_file",
+        "source_file": ".venv/lib/python3.12/site-packages/__pycache__/cook.cpython-312.pyc",
+        "line": null,
+        "snippet": "compiled implant cache named 'cook.cpython-312.pyc' in site-packages"
+      },
+      "incident_basis": "The incident announcement's response steps instruct deleting any matching __pycache__/cook*.pyc and sitecustomize*.pyc from every affected site-packages along with the implant sources (LL-009, LL-010).",
+      "remediation": "Delete the cached implant bytecode together with its sources, from the shell, then rebuild the environment and rotate reachable secrets."
+    },
+    {
+      "rule_id": "LL-009",
+      "rule_name": "Implant file present: cook.pth / cook.py",
+      "severity": "critical",
+      "component": {
+        "name": "cook.pth",
+        "type": "installed-environment",
+        "vendor": "LiteLLM (BerriAI)"
+      },
+      "evidence": {
+        "type": "implant_file",
+        "source_file": ".venv/lib/python3.12/site-packages/cook.pth",
+        "line": null,
+        "snippet": "implant file named 'cook.pth' in site-packages"
+      },
+      "incident_basis": "The incident announcement names cook.pth in its filesystem evidence to search for, and its response steps instruct deleting cook.pth and cook.py from every affected site-packages: any Python start in the affected environment executes them again. Severity is critical when the file sits in a site-packages directory.",
+      "remediation": "From the shell (not via pip, which would execute the implant again), delete cook.pth, cook.py and any __pycache__/cook*.pyc from every affected site-packages, kill the detached daemon holding /tmp/remote_code_loader.lock, then rebuild the environment and rotate reachable secrets."
+    },
+    {
+      "rule_id": "LL-009",
+      "rule_name": "Implant file present: cook.pth / cook.py",
+      "severity": "critical",
+      "component": {
+        "name": "cook.py",
+        "type": "installed-environment",
+        "vendor": "LiteLLM (BerriAI)"
+      },
+      "evidence": {
+        "type": "implant_file",
+        "source_file": ".venv/lib/python3.12/site-packages/cook.py",
+        "line": null,
+        "snippet": "implant file named 'cook.py' in site-packages"
+      },
+      "incident_basis": "The incident announcement names cook.pth in its filesystem evidence to search for, and its response steps instruct deleting cook.pth and cook.py from every affected site-packages: any Python start in the affected environment executes them again. Severity is critical when the file sits in a site-packages directory.",
+      "remediation": "From the shell (not via pip, which would execute the implant again), delete cook.pth, cook.py and any __pycache__/cook*.pyc from every affected site-packages, kill the detached daemon holding /tmp/remote_code_loader.lock, then rebuild the environment and rotate reachable secrets."
+    },
+    {
+      "rule_id": "LL-008",
+      "rule_name": "Installed litellm-1.107.0 distribution metadata present",
+      "severity": "critical",
+      "component": {
+        "name": "litellm 1.107.0 (installed)",
+        "type": "installed-environment",
+        "vendor": "LiteLLM (BerriAI)"
+      },
+      "evidence": {
+        "type": "installed_metadata",
+        "source_file": ".venv/lib/python3.12/site-packages/litellm-1.107.0.dist-info",
+        "line": null,
+        "snippet": "installed distribution metadata directory 'litellm-1.107.0.dist-info'"
+      },
+      "incident_basis": "The incident announcement's check instructions say: 'Search filesystem evidence for litellm-1.107.0.dist-info, cook.pth, and sitecustomize.py. Finding one confirms exposure, but not finding one does not prove the environment is clean.' A litellm-1.107.0.dist-info directory means the affected release is (or was) installed in this environment.",
+      "remediation": "Treat this environment as compromised. Follow the vendor response steps in order - starting from the shell, not pip: remove the implant files (LL-009 to LL-011), kill the daemon, then rebuild the environment from scratch with litellm==1.106.2 and rotate reachable secrets."
+    },
+    {
+      "rule_id": "LL-010",
+      "rule_name": "Implant file present: sitecustomize.py",
+      "severity": "critical",
+      "component": {
+        "name": "sitecustomize.py",
+        "type": "installed-environment",
+        "vendor": "LiteLLM (BerriAI)"
+      },
+      "evidence": {
+        "type": "implant_file",
+        "source_file": ".venv/lib/python3.12/site-packages/sitecustomize.py",
+        "line": null,
+        "snippet": "implant file named 'sitecustomize.py' in site-packages"
+      },
+      "incident_basis": "The incident announcement names sitecustomize.py in its filesystem evidence to search for ('Finding one confirms exposure') and its response steps instruct deleting sitecustomize.py from every affected site-packages, because Python executes it at every start. Severity is critical when the file sits in a site-packages directory.",
+      "remediation": "Inspect the file, then delete sitecustomize.py and any sitecustomize*.pyc from every affected site-packages (from the shell, not via pip), kill the detached daemon, rebuild the environment and rotate reachable secrets."
+    },
+    {
+      "rule_id": "LL-005",
+      "rule_name": "Compromised LiteLLM image digest referenced",
+      "severity": "critical",
+      "component": {
+        "name": "litellm image index (sha256:1bbcb144...)",
+        "type": "container-image",
+        "vendor": "LiteLLM (BerriAI)"
+      },
+      "evidence": {
+        "type": "container_image_digest",
+        "source_file": "docker-compose.yml",
+        "line": 3,
+        "snippet": "image: berriai/litellm@sha256:1bbcb1443bc962e45f5aad53fe3d2c30600e0379715fb6c664cdd3ac126c339e"
+      },
+      "incident_basis": "The incident announcement lists compromised image index sha256:1bbcb1443bc962e45f5aad53fe3d2c30600e0379715fb6c664cdd3ac126c339e (Docker Hub tags v1.107.0, latest, main-latest, main-stable, 2026-10-21 11:46:56-14:20 UTC) and GHCR digests for ghcr.io/berriai/litellm, ghcr.io/berriai/litellm-database and ghcr.io/berriai/litellm-non_root (published truncated; prefix-matched where noted). It states: if a container executed the affected digest, treat it as compromised.",
+      "remediation": "Remove/rebuild any image or deployment referencing this digest, redeploy from a verified clean image, and treat hosts that ran it as compromised per the vendor response steps (including secret rotation)."
+    },
+    {
+      "rule_id": "LL-001",
+      "rule_name": "Affected LiteLLM version pinned (1.107.0)",
+      "severity": "critical",
+      "component": {
+        "name": "litellm ==1.107.0",
+        "type": "software-dependency",
+        "vendor": "LiteLLM (BerriAI)"
+      },
+      "evidence": {
+        "type": "version_pin",
+        "source_file": "requirements.txt",
+        "line": 2,
+        "snippet": "litellm==1.107.0"
+      },
+      "incident_basis": "The incident announcement confirms the PyPI release litellm==1.107.0 was malicious (live 2026-10-21 11:39:51-13:23 UTC, since pulled) and states: if you ran pip install on LiteLLM v1.107.0, assume it is compromised.",
+      "remediation": "Treat any environment that installed this pin as compromised and follow the vendor response steps in this report (do not start with pip install inside the affected environment). Change the pin to litellm==1.106.2 or another pre-incident version and rebuild the environment from scratch."
+    },
+    {
+      "rule_id": "LL-002",
+      "rule_name": "Lockfile resolves LiteLLM to the affected version (1.107.0)",
+      "severity": "critical",
+      "component": {
+        "name": "litellm 1.107.0 (locked)",
+        "type": "software-dependency",
+        "vendor": "LiteLLM (BerriAI)"
+      },
+      "evidence": {
+        "type": "lockfile_resolution",
+        "source_file": "services/api/Pipfile.lock",
+        "line": 4,
+        "snippet": "\"litellm\": \"version\": \"==1.107.0\""
+      },
+      "incident_basis": "A lockfile is the record of what an install actually resolves to. This lockfile resolves litellm to 1.107.0, the PyPI release the incident announcement confirms was malicious (live 2026-10-21 11:39:51-13:23 UTC).",
+      "remediation": "Regenerate the lockfile with litellm pinned to 1.106.2 (or another pre-incident version), rebuild environments/images from scratch, and treat any environment already installed from this lockfile as compromised per the vendor response steps."
+    },
+    {
+      "rule_id": "LL-012",
+      "rule_name": "Daemon marker file present: remote_code_loader.lock",
+      "severity": "critical",
+      "component": {
+        "name": "remote_code_loader.lock",
+        "type": "installed-environment",
+        "vendor": "LiteLLM (BerriAI)"
+      },
+      "evidence": {
+        "type": "marker_file",
+        "source_file": "tmp/remote_code_loader.lock",
+        "line": null,
+        "snippet": "daemon marker file named 'remote_code_loader.lock'"
+      },
+      "incident_basis": "The incident announcement's response steps say the malicious detached daemon holds /tmp/remote_code_loader.lock, and: 'If the marker file exists, the exfil is confirmed.'",
+      "remediation": "Kill the detached python daemon holding this lock, remove the implant files (LL-009 to LL-011), assume exfiltration succeeded on any host with outbound internet, and rotate every secret the host could reach."
+    },
+    {
+      "rule_id": "LL-002",
+      "rule_name": "Lockfile resolves LiteLLM to the affected version (1.107.0)",
+      "severity": "critical",
+      "component": {
+        "name": "litellm 1.107.0 (locked)",
+        "type": "software-dependency",
+        "vendor": "LiteLLM (BerriAI)"
+      },
+      "evidence": {
+        "type": "lockfile_resolution",
+        "source_file": "uv.lock",
+        "line": 6,
+        "snippet": "name = \"litellm\", version = \"1.107.0\""
+      },
+      "incident_basis": "A lockfile is the record of what an install actually resolves to. This lockfile resolves litellm to 1.107.0, the PyPI release the incident announcement confirms was malicious (live 2026-10-21 11:39:51-13:23 UTC).",
+      "remediation": "Regenerate the lockfile with litellm pinned to 1.106.2 (or another pre-incident version), rebuild environments/images from scratch, and treat any environment already installed from this lockfile as compromised per the vendor response steps."
+    },
+    {
+      "rule_id": "LL-007",
+      "rule_name": "Floating LiteLLM image tag referenced (latest / main-latest / main-stable / untagged)",
+      "severity": "high",
+      "component": {
+        "name": "ghcr.io/berriai/litellm:main-stable",
+        "type": "container-image",
+        "vendor": "LiteLLM (BerriAI)"
+      },
+      "evidence": {
+        "type": "container_image",
+        "source_file": "Dockerfile",
+        "line": 1,
+        "snippet": "FROM ghcr.io/berriai/litellm:main-stable AS proxy"
+      },
+      "incident_basis": "The incident announcement states the tags latest, main-latest and main-stable pointed at the compromised image index from 2026-10-21 11:46:56 to 14:20 UTC (an untagged reference implies latest). Whether a given deployment was exposed depends on when the image was pulled - check pull/build timestamps and image digests against LL-005.",
+      "remediation": "Pin images by digest or to a verified clean tag, rebuild, and audit any pull that happened during 2026-10-21 11:46-14:20 UTC."
+    },
+    {
+      "rule_id": "LL-003",
+      "rule_name": "Version spec admits the affected version (unpinned or ranged)",
+      "severity": "high",
+      "component": {
+        "name": "litellm",
+        "type": "software-dependency",
+        "vendor": "LiteLLM (BerriAI)"
+      },
+      "evidence": {
+        "type": "version_spec",
+        "source_file": "Dockerfile",
+        "line": 5,
+        "snippet": "RUN pip install litellm"
+      },
+      "incident_basis": "The incident announcement states: 'You are affected if you used an unpinned version of LiteLLM between 11:39 and 13:23 UTC via pip.' This spec admits 1.107.0, so an install performed in that window would have resolved to the malicious release. The manifest alone cannot prove when an install happened - check install/CI timestamps and the installed-environment rules (LL-008 to LL-013) for confirmation.",
+      "remediation": "Pin litellm to an exact pre-incident version (the announcement recommends 1.106.2) everywhere, regenerate lockfiles, and audit any install that ran on 2026-10-21 between 11:39 and 13:23 UTC."
+    },
+    {
+      "rule_id": "LL-003",
+      "rule_name": "Version spec admits the affected version (unpinned or ranged)",
+      "severity": "high",
+      "component": {
+        "name": "litellm ~=1.106",
+        "type": "software-dependency",
+        "vendor": "LiteLLM (BerriAI)"
+      },
+      "evidence": {
+        "type": "version_spec",
+        "source_file": "pyproject.toml",
+        "line": 6,
+        "snippet": "litellm~=1.106"
+      },
+      "incident_basis": "The incident announcement states: 'You are affected if you used an unpinned version of LiteLLM between 11:39 and 13:23 UTC via pip.' This spec admits 1.107.0, so an install performed in that window would have resolved to the malicious release. The manifest alone cannot prove when an install happened - check install/CI timestamps and the installed-environment rules (LL-008 to LL-013) for confirmation.",
+      "remediation": "Pin litellm to an exact pre-incident version (the announcement recommends 1.106.2) everywhere, regenerate lockfiles, and audit any install that ran on 2026-10-21 between 11:39 and 13:23 UTC."
+    },
+    {
+      "rule_id": "LL-003",
+      "rule_name": "Version spec admits the affected version (unpinned or ranged)",
+      "severity": "high",
+      "component": {
+        "name": "litellm[proxy] >=1.100",
+        "type": "software-dependency",
+        "vendor": "LiteLLM (BerriAI)"
+      },
+      "evidence": {
+        "type": "version_spec",
+        "source_file": "requirements-dev.txt",
+        "line": 2,
+        "snippet": "litellm[proxy]>=1.100"
+      },
+      "incident_basis": "The incident announcement states: 'You are affected if you used an unpinned version of LiteLLM between 11:39 and 13:23 UTC via pip.' This spec admits 1.107.0, so an install performed in that window would have resolved to the malicious release. The manifest alone cannot prove when an install happened - check install/CI timestamps and the installed-environment rules (LL-008 to LL-013) for confirmation.",
+      "remediation": "Pin litellm to an exact pre-incident version (the announcement recommends 1.106.2) everywhere, regenerate lockfiles, and audit any install that ran on 2026-10-21 between 11:39 and 13:23 UTC."
+    },
+    {
+      "rule_id": "LL-004",
+      "rule_name": "LiteLLM reference excludes the affected version",
+      "severity": "info",
+      "component": {
+        "name": "litellm =1.106.2",
+        "type": "software-dependency",
+        "vendor": "LiteLLM (BerriAI)"
+      },
+      "evidence": {
+        "type": "version_spec",
+        "source_file": "environment.yml",
+        "line": 4,
+        "snippet": "- litellm=1.106.2"
+      },
+      "incident_basis": "The incident announcement states all versions before 1.107.0 are safe and recommends pinning to 1.106.2 or another explicit pre-incident version. This reference cannot resolve to 1.107.0.",
+      "remediation": "No action needed for this reference. Keep the explicit pin so future installs cannot drift into a bad release."
+    },
+    {
+      "rule_id": "LL-004",
+      "rule_name": "LiteLLM reference excludes the affected version",
+      "severity": "info",
+      "component": {
+        "name": "litellm[proxy] ==1.106.2",
+        "type": "software-dependency",
+        "vendor": "LiteLLM (BerriAI)"
+      },
+      "evidence": {
+        "type": "version_spec",
+        "source_file": "pyproject.toml",
+        "line": 12,
+        "snippet": "litellm[proxy]==1.106.2"
+      },
+      "incident_basis": "The incident announcement states all versions before 1.107.0 are safe and recommends pinning to 1.106.2 or another explicit pre-incident version. This reference cannot resolve to 1.107.0.",
+      "remediation": "No action needed for this reference. Keep the explicit pin so future installs cannot drift into a bad release."
+    }
+  ],
+  "vendor_response_steps": [
+    "Do NOT start with pip install: any Python start in an affected environment runs cook.pth and sitecustomize.py again, and that includes running pip.",
+    "From the shell, delete cook.pth, cook.py, sitecustomize.py and any matching __pycache__/cook*.pyc and sitecustomize*.pyc from every affected site-packages.",
+    "Kill the detached python daemon (it holds /tmp/remote_code_loader.lock).",
+    "Reinstall pinned to litellm==1.106.2. Rebuilding images and venvs from scratch is better.",
+    "If 1.107.0 was ever installed on a host with outbound internet, assume the exfiltration succeeded; rotate everything the host could reach: the instance/task IAM role, every provider key stored in the LiteLLM proxy DB plus the master and virtual keys, the DATABASE_URL password, and any secret in the environment of any process on the host.",
+    "Check CloudTrail for GetCallerIdentity from the instance role around install time, then for use of the role's credentials from outside your infrastructure."
+  ],
+  "limitations": "This tool checks a fixed, published set of indicators taken from LiteLLM's official incident announcement: dependency specs and lockfiles that pin, admit or exclude litellm==1.107.0; container image tags and digests named in the announcement; installed litellm distribution metadata; and the implant/marker filenames the announcement lists (cook.pth, cook.py, sitecustomize.py, their compiled caches, litellm-1.107.0.dist-info, remote_code_loader.lock).\n\nIt cannot detect: installs that left no artifact in the scanned tree (environments rebuilt or deleted after exposure); images pulled and run without any definition file in the tree; exposure recorded only in CI logs, shell history or registry audit logs; files renamed away from the announced names; or compromise of secrets that were reachable from an affected host (only rotation addresses that).\n\nSeverity wording follows the announcement: findings marked critical are the artifacts the vendor says to treat as compromised; 'admits'-style findings (LL-003, LL-007) mark exposure surface whose impact depends on when an install or pull happened relative to the announced windows - they are not proof that the malicious artifact was installed.\n\nA report without findings means only that none of the announced indicators were found in the scanned tree. Quoting the announcement: not finding an indicator 'does not prove the environment is clean'. This tool is an evidence-collection aid for the LiteLLM v1.107.0 incident; it is not a security certification, and it never declares an environment safe."
+}

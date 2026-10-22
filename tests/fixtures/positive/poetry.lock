@@ -1,0 +1,7 @@
+[[package]]
+name = "litellm"
+version = "1.106.2"
+description = "Library to easily interface with LLM APIs"
+category = "main"
+optional = false
+python-versions = ">=3.9"

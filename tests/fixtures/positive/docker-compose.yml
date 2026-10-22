@@ -1,0 +1,5 @@
+services:
+  db-proxy:
+    image: ghcr.io/berriai/litellm-database@sha256:c00f9d92c4270123456789abcdef0123456789abcdef0123456789abcdef0123
+  pinned:
+    image: berriai/litellm@sha256:1bbcb1443bc962e45f5aad53fe3d2c30600e0379715fb6c664cdd3ac126c339e

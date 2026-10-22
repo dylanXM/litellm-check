@@ -1,0 +1,7 @@
+{
+    "_meta": {"hash": {"sha256": "cafef00d"}},
+    "default": {
+        "litellm": {"version": "==1.107.0", "hashes": []}
+    },
+    "develop": {}
+}

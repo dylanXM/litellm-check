@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install
+        run: pip install -e ".[dev]"
+      - name: Lint
+        run: ruff check src tests
+      - name: Test
+        run: pytest -q
+      - name: Dogfood - negative fixture must pass the CI gate
+        run: litellm-check scan tests/fixtures/negative --fail-on high
+      - name: Dogfood - demo project must produce findings
+        run: |
+          litellm-check scan examples/demo-project --format json --out /tmp/r.json
+          python -c "import json; d=json.load(open('/tmp/r.json')); assert d['summary']['by_severity']['critical'] >= 10, d['summary']"

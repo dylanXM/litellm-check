@@ -1,0 +1,2 @@
+# dev extras resolve to the newest allowed release
+litellm[proxy]>=1.100

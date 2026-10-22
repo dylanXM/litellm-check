@@ -1,0 +1,8 @@
+{
+    "_meta": {"hash": {"sha256": "deadbeef"}},
+    "default": {
+        "litellm": {"version": "==1.107.0", "hashes": []},
+        "requests": {"version": "==2.32.3", "hashes": []}
+    },
+    "develop": {}
+}
