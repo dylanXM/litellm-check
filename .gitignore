@@ -1,4 +1,4 @@
-.venv/
+/.venv/
 __pycache__/
 *.py[cod]
 *.egg-info/
@@ -8,3 +8,14 @@ build/
 .ruff_cache/
 *.report.md
 *.report.json
+
+# Fixture payloads are evidence, not build junk: the scanner's test and
+# demo fixtures plant fake implants (dist-info METADATA, cook.pth,
+# sitecustomize.py, __pycache__ bytecode) inside fake venvs. They must be
+# committed -- with the old unanchored `.venv/` rule they were silently
+# ignored, CI checked out a tree missing the LL-008/009/010/011/013
+# evidence, and pytest failed on every runner while passing locally.
+!tests/fixtures/positive/.venv/lib/python3.12/site-packages/__pycache__/
+!tests/fixtures/positive/.venv/lib/python3.12/site-packages/__pycache__/cook.cpython-312.pyc
+!examples/demo-project/.venv/lib/python3.12/site-packages/__pycache__/
+!examples/demo-project/.venv/lib/python3.12/site-packages/__pycache__/cook.cpython-312.pyc
